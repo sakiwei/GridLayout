@@ -22,7 +22,8 @@
 #pragma mark - UICollectionViewDelegateFlowLayout
 ////////////////////////////////////////////////////////////////////////////
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    
+  
+  
     CGFloat width = 0.0;
     if (self.column > 1) {
         width = (collectionView.frame.size.width-self.padding*(self.column-1))/self.column;
@@ -48,18 +49,27 @@
 }
 
 // forward collection view delegate methods to this instance delegate
--(BOOL)respondsToSelector:(SEL)aSelector {
-    if ([self.delegate respondsToSelector:aSelector]) {
-        return YES;
-    }
-    return [super respondsToSelector:aSelector];
+- (BOOL)respondsToSelector:(SEL)aSelector
+{
+  return [super respondsToSelector:aSelector] || [self.delegate respondsToSelector:aSelector];
 }
 
-
--(id)forwardingTargetForSelector:(SEL)aSelector {
-    if ([self.delegate respondsToSelector:aSelector]) {
-        return self.delegate;
-    }
-    return [super forwardingTargetForSelector:aSelector];
+- (void)forwardInvocation:(NSInvocation *)anInvocation
+{
+  if ([self.delegate respondsToSelector:[anInvocation selector]]) {
+    [anInvocation invokeWithTarget:self.delegate];
+  } else {
+    [super forwardInvocation:anInvocation];
+  }
 }
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)selector
+{
+  NSMethodSignature *signature = [super methodSignatureForSelector:selector];
+  if (!signature) {
+    signature = [(NSObject*)self.delegate methodSignatureForSelector:selector];
+  }
+  return signature;
+}
+
 @end
